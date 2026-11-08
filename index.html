@@ -2,38 +2,17 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>BlaParkCar</title>
-  
-  <meta name="theme-color" content="#0f172a" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="BlaParkCar" />
-  
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%230f172a'/><rect x='60' y='60' width='392' height='392' rx='80' fill='%231e293b'/><circle cx='256' cy='256' r='140' fill='%2310b981'/><text x='256' y='325' font-family='Arial-Black,sans-serif' font-weight='900' font-size='200' fill='%230f172a' text-anchor='middle'>P</text></svg>" />
-  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='%230f172a'/><rect x='60' y='60' width='392' height='392' rx='80' fill='%231e293b'/><circle cx='256' cy='256' r='140' fill='%2310b981'/><text x='256' y='325' font-family='Arial-Black,sans-serif' font-weight='900' font-size='200' fill='%230f172a' text-anchor='middle'>P</text></svg>" />
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BlaParkCar - Plataforma de Alquiler Temporal de Garajes</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel compiler -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased">
-
-  <div id="pwa-install-banner" class="hidden fixed top-0 left-0 right-0 z-50 bg-emerald-500 text-slate-950 px-4 py-3 shadow-2xl flex items-center justify-between font-bold text-xs">
-    <div class="flex items-center space-x-2">
-      <span class="bg-slate-950 text-emerald-400 w-6 h-6 rounded-lg flex items-center justify-center font-black">P</span>
-      <span>¿Quieres instalar la App BlaParkCar en tu móvil?</span>
-    </div>
-    <div class="flex items-center space-x-2">
-      <button id="pwa-btn-install" class="bg-slate-950 text-white px-3 py-1.5 rounded-lg text-xs font-black shadow hover:bg-slate-800">
-        Instalar Ahora
-      </button>
-      <button onclick="document.getElementById('pwa-install-banner').classList.add('hidden')" class="text-slate-950 p-1 font-black">✕</button>
-    </div>
-  </div>
-
+<body class="bg-slate-900 text-slate-100 font-sans">
   <div id="root"></div>
 
   <script type="text/babel">
@@ -79,14 +58,32 @@
         reviewsCount: 22,
         features: { covered: true, electricCharger: false, autoDoor: true, maxSize: "Mediano / Berlina" },
         image: "https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?auto=format&fit=crop&q=80&w=600"
+      },
+      {
+        id: 4,
+        title: "Plaza subterránea junto a Barcelona Sants",
+        city: "Barcelona",
+        neighborhood: "Sants / Eixample",
+        address: "Carrer de Tarragona, 108",
+        pricePerHour: 3.50,
+        pricePerDay: 24.00,
+        ownerName: "Montserrat G.",
+        ownerRating: 4.88,
+        reviewsCount: 41,
+        features: { covered: true, electricCharger: true, autoDoor: true, maxSize: "Mediano / Berlina" },
+        image: "https://images.unsplash.com/photo-1545179605-1296651e9d43?auto=format&fit=crop&q=80&w=600"
       }
     ];
 
     function App() {
-      const [appMode, setAppMode] = React.useState('DRIVER');
+      const [appMode, setAppMode] = React.useState('DRIVER'); // 'DRIVER' or 'OWNER'
       const [driverTab, setDriverTab] = React.useState('search');
+      const [ownerTab, setOwnerTab] = React.useState('dashboard');
+
       const [spaces, setSpaces] = React.useState(INITIAL_SPACES);
       const [searchCity, setSearchCity] = React.useState('');
+      const [filterCharger, setFilterCharger] = React.useState(false);
+      
       const [userBookings, setUserBookings] = React.useState([
         {
           id: "RES-9821",
@@ -97,13 +94,366 @@
           totalPrice: 18.40
         }
       ]);
+
+      const [mySpaces, setMySpaces] = React.useState([
+        {
+          id: 101,
+          title: "Mi plaza en Sevilla Nervión",
+          city: "Sevilla",
+          pricePerHour: 2.20,
+          isVacant: true
+        }
+      ]);
+
       const [selectedSpace, setSelectedSpace] = React.useState(null);
       const [hours, setHours] = React.useState(4);
 
-      const filteredSpaces = spaces.filter(s => 
-        !searchCity || 
-        s.city.toLowerCase().includes(searchCity.toLowerCase()) || 
-        s.neighborhood.toLowerCase().includes(searchCity.toLowerCase())
-      );
+      // Publish new space state
+      const [newTitle, setNewTitle] = React.useState('');
+      const [newCity, setNewCity] = React.useState('Sevilla');
+      const [newPrice, setNewPrice] = React.useState('2.20');
+      const [newAddress, setNewAddress] = React.useState('');
 
-      const handleConfirmBooking = ()
+      const filteredSpaces = spaces.filter(s => {
+        const matchCity = !searchCity || s.city.toLowerCase().includes(searchCity.toLowerCase()) || s.neighborhood.toLowerCase().includes(searchCity.toLowerCase());
+        const matchCharger = !filterCharger || s.features.electricCharger;
+        return matchCity && matchCharger;
+      });
+
+      const handleConfirmBooking = () => {
+        if (!selectedSpace) return;
+        const pin = Math.floor(1000 + Math.random() * 9000).toString();
+        const total = (selectedSpace.pricePerHour * hours + 1.20).toFixed(2);
+        const booking = {
+          id: `RES-${pin}`,
+          spaceTitle: selectedSpace.title,
+          city: selectedSpace.city,
+          address: selectedSpace.address,
+          pinCode: pin,
+          totalPrice: parseFloat(total)
+        };
+        setUserBookings([booking, ...userBookings]);
+        alert(`¡Reserva realizada con éxito!\n\nTu PIN de entrada es: ${pin}`);
+        setSelectedSpace(null);
+        setDriverTab('bookings');
+      };
+
+      const handleCreateSpace = (e) => {
+        e.preventDefault();
+        const item = {
+          id: Date.now(),
+          title: newTitle || `Plaza de Garaje en ${newCity}`,
+          city: newCity,
+          neighborhood: "Centro",
+          address: newAddress || "Calle Principal",
+          pricePerHour: parseFloat(newPrice),
+          pricePerDay: parseFloat(newPrice) * 7,
+          ownerName: "Tú (Anfitrión)",
+          ownerRating: 5.0,
+          reviewsCount: 1,
+          features: { covered: true, electricCharger: false, autoDoor: true, maxSize: "SUV / Grande" },
+          image: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&q=80&w=600"
+        };
+        setSpaces([item, ...spaces]);
+        setMySpaces([{ id: item.id, title: item.title, city: item.city, pricePerHour: item.pricePerHour, isVacant: true }, ...mySpaces]);
+        alert("¡Plaza publicada correctamente en España!");
+        setOwnerTab('dashboard');
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col justify-between">
+          
+          {/* BARRA SUPERIOR CON SELECTOR DE MODO */}
+          <header className="bg-slate-950 border-b border-slate-800 px-4 py-3 sticky top-0 z-40">
+            <div className="max-w-6xl mx-auto flex items-center justify-between">
+              
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-emerald-500 text-slate-950 font-black rounded-xl flex items-center justify-center text-lg">P</div>
+                <span className="text-xl font-black text-white">BlaPark<span className={appMode === 'DRIVER' ? 'text-emerald-400' : 'text-violet-400'}>Car</span></span>
+              </div>
+
+              {/* CONMUTADOR PRINCIPAL CONDUCTOR / PROPIETARIO */}
+              <div className="flex bg-slate-900 p-1 rounded-2xl border border-slate-800">
+                <button 
+                  onClick={() => setAppMode('DRIVER')} 
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${appMode === 'DRIVER' ? 'bg-emerald-500 text-slate-950 shadow' : 'text-slate-400'}`}>
+                  🚗 Modo Conductor
+                </button>
+                <button 
+                  onClick={() => setAppMode('OWNER')} 
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${appMode === 'OWNER' ? 'bg-violet-600 text-white shadow' : 'text-slate-400'}`}>
+                  🏢 Modo Propietario
+                </button>
+              </div>
+
+            </div>
+          </header>
+
+          {/* CONTENIDO MODO CONDUCTOR */}
+          {appMode === 'DRIVER' && (
+            <main className="max-w-6xl mx-auto w-full p-4 sm:p-6 space-y-6 flex-1">
+              
+              {/* SUB-NAVEGACION CONDUCTOR */}
+              <div className="flex space-x-2 border-b border-slate-800 pb-3">
+                <button 
+                  onClick={() => setDriverTab('search')} 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition ${driverTab === 'search' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400'}`}>
+                  🔍 Buscar Garaje
+                </button>
+                <button 
+                  onClick={() => setDriverTab('bookings')} 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition ${driverTab === 'bookings' ? 'bg-slate-800 text-emerald-400' : 'text-slate-400'}`}>
+                  🔑 Mis Reservas ({userBookings.length})
+                </button>
+              </div>
+
+              {driverTab === 'search' && (
+                <>
+                  {/* BARRA DE BÚSQUEDA Y FILTROS */}
+                  <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 flex flex-col sm:flex-row gap-3">
+                    <input 
+                      type="text"
+                      placeholder="Buscar por ciudad o zona (Sevilla, Madrid, Córdoba, Barcelona)..."
+                      value={searchCity}
+                      onChange={e => setSearchCity(e.target.value)}
+                      className="flex-1 bg-slate-900 border border-slate-700 px-4 py-2.5 rounded-xl text-sm focus:outline-none text-white"
+                    />
+                    <button 
+                      onClick={() => setFilterCharger(!filterCharger)}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition ${filterCharger ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500' : 'bg-slate-900 text-slate-400 border-slate-700'}`}>
+                      ⚡ Cargador Eléctrico
+                    </button>
+                  </div>
+
+                  {/* PARRILLA DE PLAZAS */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredSpaces.map(space => (
+                      <div key={space.id} className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between hover:border-slate-700 transition">
+                        <div>
+                          <img src={space.image} className="h-44 w-full object-cover" />
+                          <div className="p-4 space-y-2">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full">{space.city}</span>
+                              <span className="text-xs text-slate-400">⭐ {space.ownerRating} ({space.reviewsCount})</span>
+                            </div>
+                            <h3 className="font-bold text-white text-base">{space.title}</h3>
+                            <p className="text-xs text-slate-400">{space.address} ({space.neighborhood})</p>
+                          </div>
+                        </div>
+
+                        <div className="p-4 border-t border-slate-900 flex items-center justify-between">
+                          <div>
+                            <span className="text-lg font-black text-emerald-400">{space.pricePerHour.toFixed(2)} €</span>
+                            <span className="text-xs text-slate-500"> / hora</span>
+                          </div>
+                          <button 
+                            onClick={() => setSelectedSpace(space)}
+                            className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-xl transition shadow">
+                            Reservar Plaza
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {driverTab === 'bookings' && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold text-white">Tus Reservas y Pases Digitales</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {userBookings.map(b => (
+                      <div key={b.id} className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-mono text-emerald-400 font-bold">{b.id}</span>
+                          <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold">Reserva Activa</span>
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-white">{b.spaceTitle}</h3>
+                          <p className="text-xs text-slate-400">{b.address} ({b.city})</p>
+                        </div>
+                        <div className="bg-slate-900 p-3 rounded-xl flex justify-between items-center border border-slate-800">
+                          <div>
+                            <span className="text-[10px] text-slate-500 block uppercase font-bold">PIN Teclado Garaje</span>
+                            <span className="text-xl font-mono font-black text-emerald-400">{b.pinCode}</span>
+                          </div>
+                          <button onClick={() => alert("¡Puerta abriéndose por Bluetooth!")} className="bg-emerald-500 text-slate-950 font-bold text-xs px-3 py-2 rounded-xl">
+                            Abrir Puerta App
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+            </main>
+          )}
+
+          {/* CONTENIDO MODO PROPIETARIO */}
+          {appMode === 'OWNER' && (
+            <main className="max-w-6xl mx-auto w-full p-4 sm:p-6 space-y-6 flex-1">
+              
+              <div className="flex space-x-2 border-b border-slate-800 pb-3">
+                <button 
+                  onClick={() => setOwnerTab('dashboard')} 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition ${ownerTab === 'dashboard' ? 'bg-slate-800 text-violet-400' : 'text-slate-400'}`}>
+                  📊 Mi Panel
+                </button>
+                <button 
+                  onClick={() => setOwnerTab('publish')} 
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition ${ownerTab === 'publish' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}>
+                  + Publicar Plaza
+                </button>
+              </div>
+
+              {ownerTab === 'dashboard' && (
+                <div className="space-y-6">
+                  {/* MÉTRICAS */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                      <span className="text-xs text-slate-400 font-bold block">Ganancias Acumuladas</span>
+                      <span className="text-2xl font-black text-violet-400">245,00 €</span>
+                    </div>
+                    <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                      <span className="text-xs text-slate-400 font-bold block">Mis Plazas</span>
+                      <span className="text-2xl font-black text-white">{mySpaces.length}</span>
+                    </div>
+                    <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800">
+                      <span className="text-xs text-slate-400 font-bold block">Seguro ParkCover</span>
+                      <span className="text-lg font-bold text-emerald-400">50.000 € Activado</span>
+                    </div>
+                  </div>
+
+                  {/* LISTADO MIS PLAZAS */}
+                  <div className="bg-slate-950 p-5 rounded-2xl border border-slate-800 space-y-4">
+                    <h3 className="font-bold text-white">Gestión de Disponibilidad Instantánea (1-Click)</h3>
+                    {mySpaces.map(sp => (
+                      <div key={sp.id} className="bg-slate-900 p-4 rounded-xl border border-slate-800 flex justify-between items-center">
+                        <div>
+                          <h4 className="font-bold text-white text-sm">{sp.title}</h4>
+                          <span className="text-xs text-emerald-400">{sp.pricePerHour.toFixed(2)} €/h</span>
+                        </div>
+                        <button 
+                          onClick={() => alert("Estado cambiado a libre en la red de BlaParkCar")}
+                          className="bg-emerald-500 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl">
+                          ● Plaza Vacía (Alquilando)
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {ownerTab === 'publish' && (
+                <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 max-w-xl mx-auto space-y-4">
+                  <h2 className="text-lg font-bold text-white">Publicar Plaza de Garaje</h2>
+                  <form onSubmit={handleCreateSpace} className="space-y-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 block mb-1">Título de la plaza</label>
+                      <input 
+                        type="text" 
+                        placeholder="Ej. Plaza amplísima junto a la estación"
+                        value={newTitle}
+                        onChange={e => setNewTitle(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 px-3 py-2 rounded-xl text-sm text-white"
+                        required
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-bold text-slate-400 block mb-1">Ciudad</label>
+                        <select 
+                          value={newCity} 
+                          onChange={e => setNewCity(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 px-3 py-2 rounded-xl text-sm text-white">
+                          <option value="Sevilla">Sevilla</option>
+                          <option value="Madrid">Madrid</option>
+                          <option value="Barcelona">Barcelona</option>
+                          <option value="Córdoba">Córdoba</option>
+                          <option value="Valencia">Valencia</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-slate-400 block mb-1">Precio por Hora (€)</label>
+                        <input 
+                          type="number" 
+                          step="0.10"
+                          value={newPrice}
+                          onChange={e => setNewPrice(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-700 px-3 py-2 rounded-xl text-sm text-white"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-400 block mb-1">Dirección Exacta</label>
+                      <input 
+                        type="text" 
+                        placeholder="Calle, número y número de plaza"
+                        value={newAddress}
+                        onChange={e => setNewAddress(e.target.value)}
+                        className="w-full bg-slate-900 border border-slate-700 px-3 py-2 rounded-xl text-sm text-white"
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="w-full py-3 bg-violet-600 hover:bg-violet-500 font-bold text-white rounded-xl text-sm">
+                      Publicar Plaza Ahora
+                    </button>
+                  </form>
+                </div>
+              )}
+
+            </main>
+          )}
+
+          {/* MODAL DE CHECKOUT DE RESERVA */}
+          {selectedSpace && (
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-slate-900 p-6 rounded-3xl max-w-sm w-full border border-slate-700 space-y-4">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                  <h3 className="font-bold text-white text-base">Confirmar Reserva</h3>
+                  <button onClick={() => setSelectedSpace(null)} className="text-slate-400 hover:text-white">✕</button>
+                </div>
+                <div>
+                  <h4 className="font-bold text-emerald-400">{selectedSpace.title}</h4>
+                  <p className="text-xs text-slate-400">{selectedSpace.address} ({selectedSpace.city})</p>
+                </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-400 block mb-1">Horas estimadas:</label>
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="48"
+                    value={hours}
+                    onChange={e => setHours(parseInt(e.target.value) || 1)}
+                    className="w-full bg-slate-950 border border-slate-700 px-3 py-2 rounded-xl text-sm text-white"
+                  />
+                </div>
+                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-1">
+                  <div className="flex justify-between text-slate-400"><span>Plaza ({hours}h):</span><span>{(selectedSpace.pricePerHour * hours).toFixed(2)} €</span></div>
+                  <div className="flex justify-between text-slate-400"><span>Seguro ParkCover:</span><span>1.20 €</span></div>
+                  <div className="flex justify-between font-bold text-white pt-1 border-t border-slate-800 text-sm"><span>Total:</span><span className="text-emerald-400">{(selectedSpace.pricePerHour * hours + 1.20).toFixed(2)} €</span></div>
+                </div>
+                <button 
+                  onClick={handleConfirmBooking}
+                  className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-sm">
+                  Pagar y Obtener Código PIN
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* PIE DE PÁGINA */}
+          <footer className="border-t border-slate-800 bg-slate-950 py-4 text-center text-xs text-slate-500">
+            BlaParkCar España © 2026 - Red Nacional de Garajes entre Particulares.
+          </footer>
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
