@@ -22,7 +22,6 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    // Carga de Iconos Lucide
     const { 
       Car, MapPin, Calendar, Clock, ShieldCheck, Zap, 
       Key, QrCode, Search, PlusCircle, User, CreditCard, 
@@ -31,11 +30,9 @@
       ToggleLeft, ToggleRight, Radio, RefreshCw, Cpu, Layers, Building, HelpCircle 
     } = lucideReact;
 
-    // Carga dinámica de la aplicación
     fetch('./src/App.jsx')
       .then(res => res.text())
       .then(code => {
-        // Eliminar imports de react e iconos ya que se cargan globalmente
         const cleanCode = code
           .replace(/import\s+React.*?from\s+['"]react['"];?/g, '')
           .replace(/import\s+\{[\s\S]*?\}\s+from\s+['"]lucide-react['"];?/g, '');
