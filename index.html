@@ -4,10 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BlaParkCar</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel compiler -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-900">
@@ -19,28 +23,173 @@
       Key, QrCode, Search, PlusCircle, User, CreditCard, 
       CheckCircle, Sliders, DollarSign, ArrowRight, X, ChevronRight,
       TrendingUp, Award, Lock, Sparkles, Navigation, Bell, Star,
-      ToggleLeft, ToggleRight, Radio, RefreshCw, Cpu, Layers, Building, HelpCircle 
+      Building, RefreshCw
     } = lucideReact;
+
+    const INITIAL_SPACES = [
+      {
+        id: 1,
+        title: "Plaza amplísima junto a Estación Santa Justa",
+        city: "Sevilla",
+        neighborhood: "Santa Justa / Nervión",
+        address: "Calle Pablo Iglesias, 8",
+        pricePerHour: 2.30,
+        pricePerDay: 16.00,
+        ownerName: "Carlos M.",
+        ownerRating: 4.9,
+        reviewsCount: 34,
+        features: { covered: true, electricCharger: true, autoDoor: true, maxSize: "SUV / Grande" },
+        image: "https://images.unsplash.com/photo-1506521781263-d8422e82f27a?auto=format&fit=crop&q=80&w=600"
+      },
+      {
+        id: 2,
+        title: "Plaza VIP junto a Estación de Atocha",
+        city: "Madrid",
+        neighborhood: "Retiro / Arganzuela",
+        address: "Calle de Méndez Álvaro, 12",
+        pricePerHour: 3.20,
+        pricePerDay: 22.00,
+        ownerName: "Patricia L.",
+        ownerRating: 4.95,
+        reviewsCount: 52,
+        features: { covered: true, electricCharger: true, autoDoor: true, maxSize: "Cualquier tamaño" },
+        image: "https://images.unsplash.com/photo-1590674899484-d5640e854abe?auto=format&fit=crop&q=80&w=600"
+      },
+      {
+        id: 3,
+        title: "Garaje céntrico junto a Mezquita",
+        city: "Córdoba",
+        neighborhood: "Centro / Vial Norte",
+        address: "Avenida de América, 14",
+        pricePerHour: 1.90,
+        pricePerDay: 13.50,
+        ownerName: "Manuel R.",
+        ownerRating: 4.85,
+        reviewsCount: 22,
+        features: { covered: true, electricCharger: false, autoDoor: true, maxSize: "Mediano / Berlina" },
+        image: "https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?auto=format&fit=crop&q=80&w=600"
+      }
+    ];
 
     function App() {
       const [appMode, setAppMode] = React.useState('DRIVER');
+      const [searchCity, setSearchCity] = React.useState('');
+      const [selectedSpace, setSelectedSpace] = React.useState(null);
+      const [userBookings, setUserBookings] = React.useState([]);
+
+      const filteredSpaces = INITIAL_SPACES.filter(s => 
+        !searchCity || 
+        s.city.toLowerCase().includes(searchCity.toLowerCase()) || 
+        s.neighborhood.toLowerCase().includes(searchCity.toLowerCase())
+      );
+
+      const handleBook = (space) => {
+        const pin = Math.floor(1000 + Math.random() * 9000).toString();
+        const newBooking = {
+          id: `RES-${pin}`,
+          title: space.title,
+          city: space.city,
+          address: space.address,
+          pin: pin
+        };
+        setUserBookings([newBooking, ...userBookings]);
+        alert(`¡Reserva realizada con éxito en ${space.city}!\nTu PIN de entrada es: ${pin}`);
+        setSelectedSpace(null);
+      };
+
       return (
-        <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center p-6 text-center">
-          <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl max-w-md w-full space-y-4">
-            <div className="w-16 h-16 bg-emerald-500 text-slate-950 font-black text-2xl rounded-2xl flex items-center justify-center mx-auto shadow-lg">
-              P
+        <div className="min-h-screen flex flex-col font-sans bg-slate-900 text-white">
+          <header className="border-b border-slate-800 bg-slate-950 px-4 py-3 sticky top-0 z-40">
+            <div className="max-w-6xl mx-auto flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-emerald-500 text-slate-950 font-black rounded-xl flex items-center justify-center text-lg">P</div>
+                <span className="text-xl font-black">BlaPark<span className="text-emerald-400">Car</span></span>
+              </div>
+              <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-800 text-xs font-bold">
+                <button 
+                  onClick={() => setAppMode('DRIVER')} 
+                  className={`px-3 py-1.5 rounded-lg transition ${appMode === 'DRIVER' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400'}`}>
+                  Conductor
+                </button>
+                <button 
+                  onClick={() => setAppMode('OWNER')} 
+                  className={`px-3 py-1.5 rounded-lg transition ${appMode === 'OWNER' ? 'bg-violet-600 text-white' : 'text-slate-400'}`}>
+                  Propietario
+                </button>
+              </div>
             </div>
-            <h1 className="text-3xl font-black text-white">BlaParkCar</h1>
-            <p className="text-emerald-400 font-semibold text-sm">¡Tu aplicación está 100% activa en Vercel!</p>
-            <p className="text-slate-300 text-xs leading-relaxed">
-              Plataforma de alquiler de plazas de garaje entre particulares en España.
-            </p>
-            <div className="pt-4 border-t border-slate-700">
-              <button className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm transition shadow-lg">
-                Buscar Garaje Cercano
-              </button>
-            </div>
-          </div>
+          </header>
+
+          <main className="max-w-6xl mx-auto w-full p-4 space-y-6 flex-1">
+            {appMode === 'DRIVER' ? (
+              <>
+                <div className="bg-gradient-to-r from-slate-950 to-slate-900 p-6 rounded-2xl border border-slate-800 text-center space-y-3">
+                  <h1 className="text-2xl font-black text-white">Alquila Garajes entre Particulares en España</h1>
+                  <div className="max-w-md mx-auto relative">
+                    <input 
+                      type="text" 
+                      placeholder="Buscar ciudad (Ej. Sevilla, Madrid, Córdoba)..." 
+                      value={searchCity} 
+                      onChange={e => setSearchCity(e.target.value)}
+                      className="w-full pl-4 pr-10 py-2.5 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none text-white"
+                    />
+                  </div>
+                </div>
+
+                {userBookings.length > 0 && (
+                  <div className="bg-emerald-950/40 border border-emerald-500/30 p-4 rounded-2xl space-y-2">
+                    <h3 className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Tus Reservas Activas</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {userBookings.map(b => (
+                        <div key={b.id} className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                          <div>
+                            <div className="font-bold text-white">{b.title}</div>
+                            <div className="text-slate-400">{b.address} ({b.city})</div>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[10px] text-slate-400 block">PIN ACCESO</span>
+                            <span className="font-mono font-black text-emerald-400 text-base">{b.pin}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {filteredSpaces.map(space => (
+                    <div key={space.id} className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden flex flex-col justify-between">
+                      <div>
+                        <img src={space.image} className="h-40 w-full object-cover" />
+                        <div className="p-4 space-y-2">
+                          <span className="text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">{space.city}</span>
+                          <h3 className="font-bold text-sm text-white">{space.title}</h3>
+                          <p className="text-xs text-slate-400">{space.address}</p>
+                        </div>
+                      </div>
+                      <div className="p-4 pt-0 flex items-center justify-between border-t border-slate-900 mt-2">
+                        <span className="font-black text-emerald-400 text-sm">{space.pricePerHour.toFixed(2)} €/h</span>
+                        <button 
+                          onClick={() => handleBook(space)} 
+                          className="bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold px-3 py-2 rounded-xl transition">
+                          Reservar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="bg-slate-950 p-8 rounded-2xl border border-slate-800 text-center space-y-4">
+                <Building className="w-12 h-12 text-violet-400 mx-auto" />
+                <h2 className="text-xl font-bold">Panel del Propietario</h2>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">Pon tu plaza de garaje en alquiler cuando te vayas de viaje o durante tus horas de trabajo.</p>
+                <button onClick={() => alert('Función de publicación activada')} className="bg-violet-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl">
+                  + Publicar Mi Plaza
+                </button>
+              </div>
+            )}
+          </main>
         </div>
       );
     }
