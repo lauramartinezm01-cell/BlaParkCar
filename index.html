@@ -87,4 +87,23 @@
       const [driverTab, setDriverTab] = React.useState('search');
       const [spaces, setSpaces] = React.useState(INITIAL_SPACES);
       const [searchCity, setSearchCity] = React.useState('');
-      const [userBookings, setUserBookings] = React.useState(
+      const [userBookings, setUserBookings] = React.useState([
+        {
+          id: "RES-9821",
+          spaceTitle: "Plaza junto a Estación Santa Justa",
+          city: "Sevilla",
+          address: "Calle Pablo Iglesias, 8",
+          pinCode: "4829",
+          totalPrice: 18.40
+        }
+      ]);
+      const [selectedSpace, setSelectedSpace] = React.useState(null);
+      const [hours, setHours] = React.useState(4);
+
+      const filteredSpaces = spaces.filter(s => 
+        !searchCity || 
+        s.city.toLowerCase().includes(searchCity.toLowerCase()) || 
+        s.neighborhood.toLowerCase().includes(searchCity.toLowerCase())
+      );
+
+      const handleConfirmBooking = ()
